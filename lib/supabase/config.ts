@@ -52,6 +52,31 @@ export const getValidatedPublicSupabaseConfig = (): PublicSupabaseConfig => {
   return { url, anonKey: anonKeyRaw.trim() };
 };
 
+const MAX_APP_URL_LENGTH = 2048;
+
+/**
+ * Base URL for email confirmation redirects (no trailing slash).
+ * Uses NEXT_PUBLIC_APP_URL; required for signUp emailRedirectTo.
+ */
+export const getValidatedPublicAppUrl = (): string => {
+  const raw = process.env.NEXT_PUBLIC_APP_URL;
+  if (!isNonEmptyString(raw) || raw.length > MAX_APP_URL_LENGTH) {
+    throw new Error(
+      "NEXT_PUBLIC_APP_URL must be a non-empty string within length limits.",
+    );
+  }
+  const trimmed = raw.trim().replace(/\/+$/, "");
+  try {
+    const parsed = new URL(trimmed);
+    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
+      throw new Error("Invalid URL protocol");
+    }
+  } catch {
+    throw new Error("NEXT_PUBLIC_APP_URL must be a valid http(s) URL.");
+  }
+  return trimmed;
+};
+
 /**
  * Storage RLS expects object keys `{case_id}/{rest}` inside buckets `raw-uploads`
  * and `analysis-outputs`, where `case_id` is the UUID of a case owned by the

@@ -3,5 +3,9 @@ export default function AuthGroupLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <>{children}</>;
+  return (
+    <div className="min-h-screen font-[family-name:var(--font-geist-sans)]">
+      {children}
+    </div>
+  );
 }
