@@ -1,6 +1,16 @@
-/**
- * Supabase client helpers will be implemented here (browser/server clients, types).
- * Configure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY via .env.local.
- */
+"use client";
 
-export {};
+import { createBrowserClient } from "@supabase/auth-helpers-nextjs";
+
+import { getValidatedPublicSupabaseConfig } from "./config";
+import type { Database } from "./database.types";
+
+/**
+ * Browser Supabase client for Client Components.
+ * Uses @supabase/auth-helpers-nextjs v0.15 (createBrowserClient); this replaces
+ * the legacy createClientComponentClient API from older auth-helpers versions.
+ */
+export const createBrowserSupabaseClient = () => {
+  const { url, anonKey } = getValidatedPublicSupabaseConfig();
+  return createBrowserClient<Database>(url, anonKey);
+};
