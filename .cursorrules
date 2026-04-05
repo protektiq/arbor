@@ -1,0 +1,14 @@
+Arbor is an AI-powered legal intelligence platform built exclusively for family law attorneys. Its core function is the detection, documentation, and quantification of parental alienation (PA) patterns within co-parenting communication records — transforming months of raw OurFamilyWizard and TalkingParents exports into attorney-ready behavioral timelines, evidence exhibits, and draft court filings.
+
+The problem is structural: parental alienation affects an estimated 11–15% of all divorce cases with minor children — roughly 85,000–120,000 US cases annually. Every one of these cases generates a documented communication record on a co-parenting platform. Every attorney currently reads that record manually, taking notes in a linear and time-intensive process that can consume 8–15 billable hours per case. No commercial software exists to automate this work.
+
+Arbor's MVP delivers three things no current competitor — not Clio Duo, not Paxton AI, not Harvey — provides: (1) a structured ingestion pipeline for co-parenting platform exports, (2) a behavioral classification engine grounded in established PA psychological literature, and (3) court-quality output artifacts: annotated timelines, severity-scored evidence exhibits, and contempt motion drafts. The product is positioned as a research and documentation tool, not an auto-filing system, which constrains legal liability while maximizing attorney adoption.
+
+Strategic Position: Arbor is the only commercial tool that treats the co-parenting platform communication record as a first-class evidentiary artifact — analyzing it with the same rigor and depth that financial forensics tools apply to bank records in high-asset divorce cases.
+
+The Core Pain
+In high-conflict custody cases involving parental alienation allegations, the evidentiary core of the attorney's case is the co-parenting communication record: thousands of messages exchanged on OurFamilyWizard, TalkingParents, or similar platforms over months or years of post-decree conflict.
+
+Courts require patterns of behavior, not isolated incidents. This means an attorney building a PA case must read an entire communication history — often 500–3,000+ messages — identify specific behavioral indicators from established psychological criteria, establish temporal patterns (escalation before visitation exchanges, blocking behavior correlated with custody hearing dates), cross-reference with custody order terms, and organize findings into a legally coherent narrative. This process is done entirely by hand.
+
+MVP Philosophy: Ship the detection engine first. Every other feature — motion drafting, GAL reports, modification triggers — is downstream of the behavioral classification system. Validate that attorneys pay for detection before building the downstream layer.

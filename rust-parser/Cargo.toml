@@ -1,0 +1,11 @@
+[package]
+name = "rust-parser"
+version = "0.1.0"
+edition = "2021"
+description = "Arbor document parsing microservice (PDF/export handling). Stub scaffold."
+
+[[bin]]
+name = "rust-parser"
+path = "src/main.rs"
+
+[dependencies]

@@ -1,0 +1,7 @@
+.next
+node_modules
+out
+build
+coverage
+rust-parser/target
+package-lock.json
