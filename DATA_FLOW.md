@@ -15,6 +15,9 @@ flowchart TB
     jobs[Background jobs service role only]
     stripeApi[Stripe Checkout Portal webhooks]
   end
+  subgraph parser [rust-parser microservice]
+    rustParse[POST /parse OFW TalkingParents generic]
+  end
   subgraph stripe [Stripe]
     stripeHost[Stripe API]
   end
@@ -35,6 +38,8 @@ flowchart TB
   stripeHost -->|signed webhooks| stripeApi
   stripeApi -->|service role update profiles| api
   jobs -->|SUPABASE_SERVICE_ROLE_KEY bypasses RLS| api
+  rsc -.->|future export bytes base64 JSON| rustParse
+  jobs -.->|future batch parse| rustParse
   api --> auth
   api --> pg
   api --> st
@@ -79,3 +84,7 @@ flowchart TB
 - Types: [`lib/supabase/database.types.ts`](lib/supabase/database.types.ts), re-exported from [`lib/supabase/types.ts`](lib/supabase/types.ts).
 
 Update this diagram when new data sources (e.g. parsers) are wired in.
+
+## rust-parser (co-parenting exports)
+
+- **Service** ([`rust-parser/`](rust-parser/)): standalone Axum app on port **8080** — `GET /health`, `POST /parse` with base64 file payload and format enum (`ofw_pdf`, `talkingparents_pdf`, `generic_text`). Returns normalized `MessageRecord` rows, `parse_errors` for PDF/text failures, and `platform_detected`. Intended to be called from a future upload or job pipeline after an export is read from **raw-uploads** (not wired in the Next.js app yet).
