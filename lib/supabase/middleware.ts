@@ -39,5 +39,5 @@ export const updateSessionInMiddleware = async (request: NextRequest) => {
     data: { user },
   } = await supabase.auth.getUser();
 
-  return { user, response: supabaseResponse };
+  return { user, response: supabaseResponse, supabase };
 };

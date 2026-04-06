@@ -3,8 +3,10 @@ import { NextResponse } from "next/server";
 
 import { updateSessionInMiddleware } from "@/lib/supabase/middleware";
 
+const SUBSCRIPTION_ALLOWED = new Set(["active", "beta"]);
+
 export const middleware = async (request: NextRequest) => {
-  const { user, response } = await updateSessionInMiddleware(request);
+  const { user, response, supabase } = await updateSessionInMiddleware(request);
   const { pathname, search } = request.nextUrl;
 
   if (pathname.startsWith("/dashboard") && !user) {
@@ -16,6 +18,28 @@ export const middleware = async (request: NextRequest) => {
       `${pathname}${search === "" ? "" : search}`,
     );
     return NextResponse.redirect(loginUrl);
+  }
+
+  if (
+    user != null &&
+    pathname.startsWith("/dashboard") &&
+    !pathname.startsWith("/dashboard/settings/billing")
+  ) {
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("subscription_status")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (profileError == null) {
+      const status = profile?.subscription_status?.trim() ?? "";
+      if (!SUBSCRIPTION_ALLOWED.has(status)) {
+        const subscribeUrl = request.nextUrl.clone();
+        subscribeUrl.pathname = "/subscribe";
+        subscribeUrl.search = "";
+        return NextResponse.redirect(subscribeUrl);
+      }
+    }
   }
 
   if (user && (pathname === "/login" || pathname === "/signup")) {

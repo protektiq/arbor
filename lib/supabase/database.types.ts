@@ -181,6 +181,39 @@ export type Database = {
           },
         ];
       };
+      profiles: {
+        Row: {
+          id: string;
+          stripe_customer_id: string | null;
+          stripe_subscription_id: string | null;
+          subscription_status: string;
+          subscription_plan: string | null;
+          bar_number: string | null;
+          bar_verified: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id: string;
+          stripe_customer_id?: string | null;
+          stripe_subscription_id?: string | null;
+          subscription_status?: string;
+          subscription_plan?: string | null;
+          bar_number?: string | null;
+          bar_verified?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          stripe_customer_id?: string | null;
+          stripe_subscription_id?: string | null;
+          subscription_status?: string;
+          subscription_plan?: string | null;
+          bar_number?: string | null;
+          bar_verified?: boolean;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       audit_log: {
         Row: {
           id: string;
