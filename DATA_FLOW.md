@@ -38,7 +38,7 @@ flowchart TB
   stripeHost -->|signed webhooks| stripeApi
   stripeApi -->|service role update profiles| api
   jobs -->|SUPABASE_SERVICE_ROLE_KEY bypasses RLS| api
-  rsc -.->|future export bytes base64 JSON| rustParse
+  rsc -->|POST multipart upload base64 JSON parse| rustParse
   jobs -.->|future batch parse| rustParse
   api --> auth
   api --> pg
@@ -71,8 +71,17 @@ flowchart TB
 ## Storage
 
 - Buckets: **raw-uploads**, **analysis-outputs** (private).
-- Object keys must be `{case_uuid}/...` so policies can join to **cases** and enforce `attorney_id = auth.uid()`.
+- Object keys must be `{case_uuid}/...` so policies can join to **cases** and enforce `attorney_id = auth.uid()`. The app uploads to **`raw-uploads/{case_id}/{timestamp}-{sanitized_filename}`** (not `attorney_id` in the path) so existing RLS in [`supabase/migrations/20260405120002_storage.sql`](supabase/migrations/20260405120002_storage.sql) continues to apply.
 - Align `exports.file_path` with whatever convention the app uses when calling the Storage API (path within bucket vs full logical path), but keep it consistent.
+
+## Case management and ingest (MVP)
+
+- **Dashboard list** ([`app/(dashboard)/dashboard/page.tsx`](app/(dashboard)/dashboard/page.tsx)): server component loads **cases** for the session user (RLS), ordered by `created_at` desc.
+- **New case** ([`app/(dashboard)/dashboard/new-case/page.tsx`](app/(dashboard)/dashboard/new-case/page.tsx)): client form posts JSON to **`POST /api/cases`** ([`app/api/cases/route.ts`](app/api/cases/route.ts)). Parent labels used for parsing are kept in **sessionStorage** only (`arbor:caseParents:{caseId}`) so they can prefill the upload form; they are not written to Postgres.
+- **Case detail** ([`app/(dashboard)/dashboard/cases/[id]/page.tsx`](app/(dashboard)/dashboard/cases/[id]/page.tsx)): server component loads the case; **UploadZone** ([`components/upload/UploadZone.tsx`](components/upload/UploadZone.tsx)) posts multipart data to **`POST /api/cases/[id]/upload`** ([`app/api/cases/[id]/upload/route.ts`](app/api/cases/[id]/upload/route.ts)).
+- **API auth**: [`lib/auth/require-subscribed-user.ts`](lib/auth/require-subscribed-user.ts) enforces a session plus `profiles.subscription_status` in `active` or `beta` (fail closed on profile errors). **Middleware** still gates `/dashboard` pages; **`/api/cases` and `/api/cases/[id]/upload` must call this helper** because API routes are not otherwise subscription-checked.
+- **Upload handler flow**: validate multipart file (`.pdf` / `.txt`, max 50MB client and server) → upload bytes to **raw-uploads** with the user-scoped Supabase client → set **cases.status** to `ingesting` → download the same object → `POST {RUST_PARSER_URL}/parse` ([`lib/env/rust-parser.ts`](lib/env/rust-parser.ts)) with base64 body and format enum → validate response → dedupe by existing **`messages.raw_hash`** for the case → batch insert **messages** → set **cases.message_count** and **cases.status** (`ready`, or `error` when the parser returns no records but reports `parse_errors`) → append **audit_log** with `action_type: file_uploaded` and metadata `{ filename, message_count, errors }` on every completed pipeline run (including failures after storage upload).
+- **Request body size**: 50MB files require the Next.js Route Handler (and any reverse proxy / host) to accept large multipart bodies. Default limits on some serverless platforms are lower than 50MB; self-hosted Next or adjusted platform limits may be required for the full cap.
 
 ## Clients (code)
 
@@ -87,4 +96,4 @@ Update this diagram when new data sources (e.g. parsers) are wired in.
 
 ## rust-parser (co-parenting exports)
 
-- **Service** ([`rust-parser/`](rust-parser/)): standalone Axum app on port **8080** — `GET /health`, `POST /parse` with base64 file payload and format enum (`ofw_pdf`, `talkingparents_pdf`, `generic_text`). Returns normalized `MessageRecord` rows, `parse_errors` for PDF/text failures, and `platform_detected`. Intended to be called from a future upload or job pipeline after an export is read from **raw-uploads** (not wired in the Next.js app yet).
+- **Service** ([`rust-parser/`](rust-parser/)): standalone Axum app (default port **8080**) — `GET /health`, `POST /parse` with base64 file payload and format enum (`ofw_pdf`, `talkingparents_pdf`, `generic_text`). Returns normalized `MessageRecord` rows, `parse_errors` for PDF/text failures, and `platform_detected`. **Wired** from [`app/api/cases/[id]/upload/route.ts`](app/api/cases/[id]/upload/route.ts) via **`RUST_PARSER_URL`** after the file is stored and re-read from **raw-uploads**.
